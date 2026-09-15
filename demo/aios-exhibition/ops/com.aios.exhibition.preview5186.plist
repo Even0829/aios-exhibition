@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.aios.exhibition.preview5186</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>-m</string>
+    <string>http.server</string>
+    <string>5186</string>
+    <string>--bind</string>
+    <string>127.0.0.1</string>
+    <string>--directory</string>
+    <string>/Users/admin/Library/Caches/aios-exhibition-preview</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>2</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/admin/Library/Caches/aios-exhibition-preview/server.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/admin/Library/Caches/aios-exhibition-preview/server.error.log</string>
+</dict>
+</plist>
