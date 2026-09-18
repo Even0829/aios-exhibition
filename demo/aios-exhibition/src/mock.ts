@@ -268,7 +268,8 @@ export type FeedbackConfig = Omit<typeof feedback, 'chart' | 'metrics'> & {
   completion?: { title: string; description: string };
 };
 export type ScenarioId = 'normal' | 'air-warning' | 'body-warning';
-export type BodyOutcome = 'fine' | 'rest' | 'urgent';
+export type BodyOutcome = 'fine' | 'rest' | 'urgent' | 'unanswered' | 'unanswered-escalated';
+export type BodyObservationResult = 'recovered' | 'escalate';
 
 export type ExhibitionScenario = {
   id: ScenarioId;
@@ -408,11 +409,15 @@ const airWarningScenario: ExhibitionScenario = {
 export const bodyQuestions = {
   feeling: {
     message: '检测到您的心率偏快，现在是否有不舒服吗？您可直接回答：“没有不适”或者“有些不舒服”',
-    options: [{ value: 'fine', label: '没有不适' }, { value: 'discomfort', label: '有些不舒服' }],
+    options: [{ value: 'fine', label: '没有不适' }, { value: 'discomfort', label: '有些不舒服' }, { value: 'unanswered', label: '无人回应' }],
+  },
+  feelingRetry: {
+    message: '我暂时没有听到您的回答，再确认一次：您现在是否有不舒服？您可直接回答：“没有不适”或者“有些不舒服”',
+    options: [{ value: 'fine', label: '没有不适' }, { value: 'discomfort', label: '有些不舒服' }, { value: 'unanswered', label: '无人回应' }],
   },
   symptoms: {
     message: '那现在是否有明显胸痛、呼吸困难或头晕？您可以直接回答：“有明显不适”或者“没有/不确定”',
-    options: [{ value: 'urgent', label: '有明显不适' }, { value: 'rest', label: '没有/不确定' }],
+    options: [{ value: 'urgent', label: '有明显不适' }, { value: 'rest', label: '没有/不确定' }, { value: 'unanswered', label: '无人回应' }],
   },
 };
 
@@ -463,15 +468,28 @@ const bodyBase: ExhibitionScenario = {
     execution: 'INT AIOS 正在关注人体与\n空间变化并持续陪护',
   },
 };
-function bodyMemory(outcome: 'fine' | 'rest'): MemoryItem[] {
+function bodyMemory(outcome: 'fine' | 'rest' | 'unanswered'): MemoryItem[] {
   const fine = outcome === 'fine';
+  const unanswered = outcome === 'unanswered';
   return [{
     id: `body-${outcome}-result`, category: 'short',
-    title: fine ? '本轮心率偏快，体验者反馈没有不适，已记录持续关注建议' : '本轮陪护观察中，心率由 118 回落至 86 次/分',
+    title: fine
+      ? '本轮心率偏快，体验者反馈没有不适，已记录持续关注建议'
+      : unanswered
+        ? '持续未获得本人回应，15分钟关注后心率与呼吸数据恢复平稳'
+        : '本轮陪护观察中，心率由 118 回落至 86 次/分',
     scope: '当前体验者 · 睡眠带', source: fine ? '用户确认' : '服务结果', status: '新发现', statusTone: 'new',
     verification: '本轮记录', formed: '刚刚', updated: '刚刚',
-    basis: fine ? '睡眠带心率 118 次/分、呼吸 16 次/分；本人选择没有不适。未执行陪护或确认心率恢复。' : '本人选择有些不舒服、没有/不确定明显症状；陪护观察后心率 86 次/分、呼吸 16 次/分。未再次询问症状。',
-    effect: fine ? '后续继续关注心率变化，不形成已恢复结论。' : '记录本轮观察结果，不形成疾病诊断、疗效或长期阈值；15 分钟复查仅为建议。',
+    basis: fine
+      ? '睡眠带心率 118 次/分、呼吸 16 次/分；本人选择没有不适。未执行陪护或确认心率恢复。'
+      : unanswered
+        ? '主动确认期间持续未获得本人回应；15分钟持续关注后，心率由 118 回落至 86 次/分，呼吸保持 16 次/分。'
+        : '本人选择有些不舒服、没有/不确定明显症状；陪护观察后心率 86 次/分、呼吸 16 次/分。未再次询问症状。',
+    effect: fine
+      ? '后续继续关注心率变化，不形成已恢复结论。'
+      : unanswered
+        ? '只记录本轮未回应与后续数据，不推断本人感受、意识状态或医学结论。'
+        : '记录本轮观察结果，不形成疾病诊断、疗效或长期阈值；15 分钟复查仅为建议。',
     voiceExample: '为什么记住这次结果？', voiceProposal: '这条只记录本轮数据和实际回答，不形成医学诊断。',
   }, ...bodyHistory];
 }
@@ -507,6 +525,95 @@ export const bodyStories: Record<BodyOutcome, ExhibitionScenario> = {
     ], conclusion: '请停止活动，保持安全舒适体位，我将帮助向现场求助。同时持续关注、准备协同，必要时联系预设联系人' },
     execution: { severity: 'emergency', target: '请先停止活动，保持休息。我会持续观察，并同步预设紧急联系人。',
       title: '正在持续陪护', durationMs: 0, steps: [], care: { mode: 'continuous', description: '持续观察，等待外部介入' } },
+    memoryItems: bodyHistory,
+  },
+  unanswered: {
+    ...bodyBase,
+    headings: {
+      ...bodyBase.headings,
+      analysis: 'INT AIOS 正在结合人体数据\n与当前确认状态分析',
+    },
+    analysis: {
+      ...bodyBase.analysis,
+      thinking: { ...bodyBase.analysis.thinking, message: '已接收人体数据与未回应状态，正在理解当前情况' },
+      capabilities: [
+        { id: 'sleep', label: '已使用睡眠带监测能力', at: 16 },
+        { id: 'unanswered', label: '主动确认暂未获得本人回应', at: 42 },
+        { id: 'space', label: '已结合当前空间与呼吸状态', at: 68 },
+      ],
+    },
+    decision: {
+      voice: '我暂时没有听到您的回答。请先保持休息，我会继续关注您的心率和呼吸。15分钟后，如果数据仍未恢复或出现进一步异常变化，我会启动升级预案。',
+      severity: 'warning',
+      status: '暂未获得回应',
+      results: [
+        '睡眠带心率 118 次/分，当前偏快',
+        '呼吸 16 次/分，当前保持平稳',
+        '主动确认期间持续未获得本人回应',
+        '当前未获得新的明确紧急证据',
+        '保持休息并持续关注 15 分钟',
+      ],
+      conclusion: '我暂时没有听到您的回答。请先保持休息，我会继续关注您的心率和呼吸。15分钟后，如果数据仍未恢复或出现进一步异常变化，我会启动升级预案。',
+    },
+    execution: {
+      severity: 'warning',
+      target: '请先保持休息，INT AIOS 将持续关注您的心率和呼吸变化。',
+      title: '持续关注 15 分钟',
+      durationMs: 20_000,
+      steps: [],
+      care: { mode: 'timed', description: '持续观察心率与呼吸变化' },
+    },
+    feedback: {
+      severity: 'normal',
+      result: '15分钟持续关注已完成，当前心率与呼吸数据恢复平稳。',
+      voice: '已完成15分钟持续关注，心率和呼吸数据已恢复平稳。我会记录本次变化，继续保持关注。',
+      metrics: [
+        { id: 'heart', label: '当前心率', value: '86 次/分' },
+        { id: 'breath', label: '当前呼吸', value: '16 次/分' },
+        { id: 'heart-change', label: '心率前后', value: '118 → 86 次/分' },
+        { id: 'response', label: '本人回应', value: '暂未获得' },
+      ],
+      chart: { label: '15分钟心率变化', summary: '118 → 86 次/分', samples: [118, 110, 98, 86], times: ['0分钟', '5分钟', '10分钟', '15分钟'] },
+    },
+    memoryItems: bodyMemory('unanswered'),
+  },
+  'unanswered-escalated': {
+    ...bodyBase,
+    severity: 'emergency',
+    headings: {
+      ...bodyBase.headings,
+      analysis: 'INT AIOS 正在结合人体数据\n与当前确认状态分析',
+    },
+    decision: {
+      voice: '15分钟持续关注后，您的心率仍未恢复，我会启动升级预案，持续守护并同步预设紧急联系人。',
+      severity: 'emergency',
+      status: '需升级预案',
+      results: [
+        '15分钟后心率仍为 126 次/分',
+        '呼吸 18 次/分，较初始读数发生变化',
+        '主动确认仍未获得本人回应',
+        '持续守护并启动升级预案',
+      ],
+      conclusion: '15分钟后数据仍未恢复并出现进一步变化，启动升级预案。',
+    },
+    execution: {
+      severity: 'emergency',
+      target: '15分钟持续关注后数据仍未恢复。INT AIOS 将持续守护，并同步预设紧急联系人。',
+      title: '正在持续守护',
+      durationMs: 0,
+      steps: [],
+      care: {
+        mode: 'continuous',
+        description: '持续守护，记录心率与呼吸状态',
+        secondary: {
+          title: '同步预设紧急联系人',
+          pending: '准备同步预设紧急联系人',
+          running: '正在同步，等待外部介入',
+          complete: '通知已发出，等待外部介入',
+        },
+      },
+    },
+    feedback: { ...bodyBase.feedback, severity: 'emergency' },
     memoryItems: bodyHistory,
   },
 };

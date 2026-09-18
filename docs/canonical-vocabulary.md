@@ -16,11 +16,12 @@
 | Canonical Term | Allowed Alias | Deprecated Alias | Owner | Use Boundary |
 | --- | --- | --- | --- | --- |
 | Aios盒子 | 无 | none | `README.md` | 项目仓库名称；当前不等于产品定义 |
-| AIOS | none | none | `docs/knowledge/system/aios-ecosystem.md` | 正式系统名；项目文档统一使用全大写形式 |
-| 被验证价值的能力关系图 | 能力关系图 | none | `docs/foundation/aios-worldview.md` | AIOS 中心资产 |
+| AIOS | none | none | `docs/knowledge/system/aios-ecosystem.md` | 旧生态资料中的系统称谓，按需参考；当前引元定义使用引元或 INT AIOS |
+| 被验证价值的能力关系图 | 能力关系图 | none | `docs/foundation/aios-worldview.md` | 旧生态世界观中的中心资产表述 |
 | 引核（Cortex） | 引核、Cortex | 引枢、Yinhe | `docs/knowledge/system/aios-ecosystem.md` | AIOS 智能系统内核 |
 | 引芯（Nexus） | 引芯、Nexus | 引核（Nexus）、Yinxin | `docs/knowledge/system/aios-ecosystem.md` | AIOS 设备身份、位置与能力证明产品 |
-| 引元（Origin） | 引元、Origin、AI Native Edge Hub | 起源、Yinyuan | `docs/knowledge/products/origin.md` | AIOS AI 原生边缘枢纽 |
+| 引元 | INT AIOS、Origin | 起源、Yinyuan、AI Native Edge Hub（作为完整产品定位） | `docs/knowledge/products/origin.md` | 官方称谓；物理空间 AI 操作系统 |
+| 引元盒子 | none | none | `docs/knowledge/products/origin.md` | 引元的常驻运行节点；不等于整个操作系统 |
 | 元域（Realm） | 元域、Realm、Agent Growth Platform | 领域、Yuanyu | `docs/knowledge/system/aios-ecosystem.md` | AIOS 智能体能力养成平台 |
 | 织界（Orcha） | 织界、Orcha、Capability Economy Network | Orchestrator、Zhijie | `docs/knowledge/system/aios-ecosystem.md` | AIOS 能力经济网络 |
 | 引元盒子·家庭版 | 引元家庭版 | none | `docs/knowledge/products/origin-home-eldercare.md` | 引元面向家庭空间的产品线名称 |
@@ -45,6 +46,9 @@
 | 出院后30天居家恢复场景 | 30天居家恢复场景 | none | `docs/specs/eldercare/post-discharge-30-day-recovery.md` | 当前首期出院后计划执行与阶段复查具体服务场景规格 |
 | 连续数周生活能力下降场景 | 多周生活能力变化场景 | none | `docs/specs/eldercare/multiweek-functional-decline.md` | 当前首期生活能力变化发现、确认与干预复查具体服务场景规格 |
 | AIOS 家庭康养陈展 Demo | 陈展 Demo | none | `docs/knowledge/products/aios-exhibition-context.md` | 本次面向游客的电视陈展体验，不替代家庭康养产品定义 |
-| INT AIOS | none | none | `docs/knowledge/products/aios-exhibition-context.md` | 本次陈展中的系统显示名称；不改变产品知识中 AIOS 的系统名称 |
+| 引元系统模型 | none | none | `docs/knowledge/system/origin-system-model.md` | 跨场景概念与运行机制，不代表已实现接口 |
+| 介入方式与权限 | none | L0–L5（作为统一主动性等级） | `docs/knowledge/system/origin-system-model.md` | 与紧急程度、协同对象独立定义 |
+| 紧急程度 | none | none | `docs/knowledge/system/origin-system-model.md` | 决定响应时限与优先级，不自动扩大权限 |
+| 参与与协同对象 | 协同对象 | none | `docs/knowledge/system/origin-system-model.md` | 区分接收、确认、执行和接手者 |
 | 场景包 | none | none | `docs/architecture/aios-exhibition-experience.md` | 当前陈展空间入口中的生活场景分类；可用范围由架构 Owner 定义 |
 | 实体 | 固定家庭实体 | none | `docs/architecture/aios-exhibition-experience.md` | 当前陈展中沙发、桌椅等固定空间对象，与接入智能设备区分 |

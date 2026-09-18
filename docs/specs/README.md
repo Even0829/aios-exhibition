@@ -28,7 +28,7 @@ Specs 是执行和验收层，把 Owner 事实与 Architecture 转换成可验�
 ## Reading Order
 
 1. `README.md`
-2. 任务对应的规格 Owner；陈展读取 `aios-exhibition-design-system.md`，业务场景读取 `eldercare/README.md`
+2. 任务对应的规格 Owner；电视陈展读取 `aios-exhibition-design-system.md`，设备中心手机小程序读取 `device-center-mobile-design-system.md`，业务场景读取 `eldercare/README.md`
 3. 任务引用的具体验收 Owner
 
 ## Citation Rules
@@ -41,7 +41,9 @@ Specs 定义验收和约束。任务引用 Specs，不重写 Specs。
 
 ## Owners
 
-- `aios-exhibition-design-system.md`：覆盖陈展基础视觉、页面、通用组件、故事变体、特殊状态、例外、语音、动效、Mock、Figma 还原、前端映射与验收的唯一完整设计系统 Owner。
+- `device-center-prd.md`：设备中心的产品需求 Owner，覆盖跨端共用对象与状态、电视端、手机小程序、Home Assistant 品牌接入、远程控制、消息、AI 助手、最小产品服务端边界、扩展性和验收。
+- `aios-exhibition-design-system.md`：覆盖陈展电视端基础视觉、页面、通用组件、故事变体、特殊状态、例外、语音、动效、Mock、Figma 还原、前端映射与验收的唯一完整设计系统 Owner。
+- `device-center-mobile-design-system.md`：覆盖设备中心手机小程序视觉、组件、交互、动效和页面还原的独立设计系统 Owner。
 
 当前设备总览与五个具体服务场景设备组合由 `../knowledge/products/origin-home-eldercare-devices.md` 统一汇总；下方 `eldercare/` 场景规格只拥有各场景内的设备使用、流程和验收。
 

@@ -20,6 +20,7 @@
 | --- | --- |
 | 陈展前端逐页还原与组件实现 | `exhibition-frontend.md` |
 | 陈展故事、状态、服务闭环的分析与讨论 | `product/exhibition-story-discovery.md` |
+| 设备中心 PRD 与跨端需求维护 | `product/device-center-prd.md` |
 | 接收新材料，区分事实、提案和待核实项 | `source-intake.md` |
 | 更新 Owner、吸收结论、维护路由与清理重复内容 | `kb-maintenance.md` |
 | 核查知识库治理、引用、生命周期及上下文调用 | `governance/repository-governance-review.md` |

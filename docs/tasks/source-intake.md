@@ -23,31 +23,7 @@ status: ready
 
 ## Context Manifest
 
-任务绑定并进入 `active` 后填写。
-
-```text
-Current Task:
-- docs/tasks/source-intake.md
-
-README Chain:
-- README.md
-- docs/README.md
-- docs/tasks/README.md
-
-Direct References:
-- Raw material listed in "This Round Input"
-
-Owner Closure:
-- docs/RULES.md
-- docs/canonical-vocabulary.md
-- Candidate Owners identified during classification
-
-Missing:
-- none
-
-Conflicts:
-- none
-```
+当前无进行中的来源分析。新一轮绑定并进入 `active` 后，按任务协议填写实际 README Chain、Direct References、Owner Closure、Missing 与 Conflicts。
 
 ## This Round Input
 

@@ -12,6 +12,7 @@ import { FeedbackPage } from "./components/FeedbackPage";
 import { DevicePanel } from "./components/DevicePanel";
 import { SpacePanel } from "./components/SpacePanel";
 import { MemoryPanel } from "./components/MemoryPanel";
+import { deviceTestOptions, type DeviceStory, type DeviceTest } from "./deviceMock";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -26,7 +27,7 @@ import {
   WorkflowCard,
 } from "./components/Primitives";
 import RadarAnimation from "./components/RadarAnimation";
-import { bodyHistory, bodyQuestions, bodyStories, completion, exhibitionScenarios, navigation, standby, wake, type BodyOutcome, type ScenarioId } from "./mock";
+import { bodyHistory, bodyQuestions, bodyStories, completion, exhibitionScenarios, navigation, standby, wake, type BodyObservationResult, type BodyOutcome, type ScenarioId } from "./mock";
 import "@fontsource-variable/noto-sans-sc";
 import "@fontsource-variable/funnel-display";
 import "./styles.css";
@@ -55,12 +56,16 @@ function App() {
   const [flowRun, setFlowRun] = useState(0);
   const [scenarioId, setScenarioId] = useState<ScenarioId>('normal');
   const [bodyOutcome, setBodyOutcome] = useState<BodyOutcome | null>(null);
-  const [question, setQuestion] = useState<'feeling' | 'symptoms'>('feeling');
+  const [bodyObservationResult, setBodyObservationResult] = useState<BodyObservationResult>('recovered');
+  const [question, setQuestion] = useState<keyof typeof bodyQuestions>('feeling');
+  const [nextQuestion, setNextQuestion] = useState<keyof typeof bodyQuestions>('symptoms');
   const [questionTransition, setQuestionTransition] = useState<'idle' | 'question-exit' | 'loading' | 'loading-exit'>('idle');
   const [bodyResultReady, setBodyResultReady] = useState(false);
   const [bodyRecordReady, setBodyRecordReady] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [deviceOpen, setDeviceOpen] = useState(false);
+  const [deviceTestState, setDeviceTestState] = useState<DeviceTest>('normal');
+  const [onlineDeviceCount, setOnlineDeviceCount] = useState(8);
   const [spaceOpen, setSpaceOpen] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [bodySensingStarted, setBodySensingStarted] = useState(false);
@@ -70,6 +75,7 @@ function App() {
   const showDecisionVoice = useCallback(() => setDecisionVoiceShown(true), []);
   const isBody = scenarioId === 'body-warning';
   const scenario = isBody && bodyOutcome ? bodyStories[bodyOutcome] : exhibitionScenarios[scenarioId];
+  const bodyKeepsExecuting = bodyOutcome === 'urgent' || bodyOutcome === 'unanswered-escalated';
   const confirming = scene === 'confirmation-transition' || scene === 'confirming' || scene === 'confirmation-exit';
   const showPerception = scene === "seating" || scene === "perceiving" || scene === 'confirmation-transition' || (scene === "analysis-transition" && !isBody);
   const showAnalysis = scene === "analysis-transition" || scene === "analyzing" || scene === "decision-transition";
@@ -90,6 +96,18 @@ function App() {
   const voiceSeverity = endingPresentation ? 'normal' : warningVoiceActive ? scenario.severity : isBody && !showFeedback ? 'normal' : scenario.feedback.severity;
   const [notice, setNotice] = useState("");
   const functionPanelOpen = deviceOpen || spaceOpen || memoryOpen;
+  const storyReady = bodyResultReady || showAnalysis || showDecision || showExecution || showFeedback;
+  const perceptionAir = scenario.perception.space.results.find(result => result.id === 'air')?.metrics ?? [];
+  const perceptionBody = scenario.perception.body.results.find(result => result.id === 'seat')?.metrics ?? [];
+  const feedbackAir = scenario.feedback.metrics.filter(metric => ['receipt', 'temperature', 'humidity', 'co2', 'pm25'].includes(metric.id));
+  const hasAirService = scenario.execution.steps.some(step => step.id === 'purifier');
+  const deviceStory: DeviceStory = {
+    ready: storyReady,
+    present: scene !== 'standby' && scene !== 'waking',
+    airRunning: hasAirService && (showExecution || showFeedback),
+    air: (showFeedback && feedbackAir.length ? feedbackAir : perceptionAir).map(metric => ({ label: metric.label, value: metric.value })),
+    body: perceptionBody.map(metric => ({ label: metric.label, value: metric.value })),
+  };
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const analysisStart = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const analysisSettle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -169,12 +187,21 @@ function App() {
   const finishExecution = useCallback(() => {
     if (feedbackScheduled.current) return;
     feedbackScheduled.current = true;
+    if (isBody && bodyOutcome === 'unanswered' && bodyObservationResult === 'escalate') {
+      feedbackStart.current = setTimeout(() => {
+        setDecisionVoiceShown(false);
+        setBodyOutcome('unanswered-escalated');
+        setScene('execution-transition');
+        executionSettle.current = setTimeout(() => setScene('executing'), 3_200);
+      }, 3_000);
+      return;
+    }
     feedbackStart.current = setTimeout(() => {
       setFeedbackVoiceShown(false);
       setScene("feedback-transition");
       feedbackSettle.current = setTimeout(() => setScene("feedback"), 3200);
     }, 6_000);
-  }, []);
+  }, [bodyObservationResult, bodyOutcome, isBody]);
   const finishFeedback = useCallback(() => {
     if (endingScheduled.current) return;
     endingScheduled.current = true;
@@ -186,8 +213,17 @@ function App() {
   }, []);
   const showFeedbackVoice = useCallback(() => { setFeedbackVoiceShown(true); setBodyRecordReady(true); }, []);
   const answerConfirmation = useCallback((answer: string) => {
-    if (answer === 'discomfort') { setQuestionTransition('question-exit'); return; }
-    if (answer !== 'fine' && answer !== 'rest' && answer !== 'urgent') return;
+    if (answer === 'discomfort') {
+      setNextQuestion('symptoms');
+      setQuestionTransition('question-exit');
+      return;
+    }
+    if (answer === 'unanswered' && question === 'feeling') {
+      setNextQuestion('feelingRetry');
+      setQuestionTransition('question-exit');
+      return;
+    }
+    if (answer !== 'fine' && answer !== 'rest' && answer !== 'urgent' && answer !== 'unanswered') return;
     setBodyOutcome(answer);
     setScene('confirmation-exit');
     analysisStart.current = setTimeout(() => {
@@ -195,17 +231,17 @@ function App() {
       setScene('analysis-transition');
       analysisSettle.current = setTimeout(() => setScene('analyzing'), 3400);
     }, 900);
-  }, []);
+  }, [question]);
   useEffect(() => {
     if (scene !== 'confirming' || functionPanelOpen || questionTransition === 'idle') return;
     const delay = questionTransition === 'loading' ? 2_000 : 450;
     const transitionTimer = setTimeout(() => {
       if (questionTransition === 'question-exit') setQuestionTransition('loading');
       else if (questionTransition === 'loading') setQuestionTransition('loading-exit');
-      else { setQuestion('symptoms'); setQuestionTransition('idle'); }
+      else { setQuestion(nextQuestion); setQuestionTransition('idle'); }
     }, delay);
     return () => clearTimeout(transitionTimer);
-  }, [scene, functionPanelOpen, questionTransition]);
+  }, [scene, functionPanelOpen, nextQuestion, questionTransition]);
   const startBodySensing = useCallback(() => setBodySensingStarted(true), []);
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
@@ -257,6 +293,7 @@ function App() {
       setScenarioId('normal');
       setFallRecorded(false);
       setBodyOutcome(null);
+      setBodyObservationResult('recovered');
       setBodyResultReady(false);
       setBodyRecordReady(false);
       setScene("awake");
@@ -302,7 +339,20 @@ function App() {
                 : scene === "ending-transition" || scene === "ending" ? 7 : 1;
   function jumpTo(index: number) {
     if (index < 0 || index >= checkpoints.length) return;
-    if (isBody && bodyOutcome === 'urgent' && index >= 6) return;
+    if (isBody && bodyOutcome === 'unanswered' && bodyObservationResult === 'escalate' && index >= 6) {
+      cancelAutomaticFlow();
+      analysisScheduled.current = true;
+      decisionScheduled.current = true;
+      executionScheduled.current = true;
+      feedbackScheduled.current = true;
+      setDecisionVoiceShown(false);
+      setBodyOutcome('unanswered-escalated');
+      setScene('execution-transition');
+      executionSettle.current = setTimeout(() => setScene('executing'), 3_200);
+      setAvatarOpen(false);
+      return;
+    }
+    if (isBody && bodyKeepsExecuting && index >= 6) return;
     if (isBody && index >= 3 && !bodyOutcome) {
       cancelAutomaticFlow();
       analysisScheduled.current = true;
@@ -355,12 +405,14 @@ function App() {
     setReasoningStage('thinking');
     setFeedbackVoiceShown(false);
     setAvatarOpen(false);
+    setDeviceTestState('normal');
     setDeviceOpen(false);
     setSpaceOpen(false);
     setMemoryOpen(false);
     setNotice("");
     setScenarioId('normal');
     setBodyOutcome(null);
+    setBodyObservationResult('recovered');
     setQuestion('feeling');
     setBodyResultReady(false);
     setBodyRecordReady(false);
@@ -385,6 +437,7 @@ function App() {
     setNotice("");
     setScenarioId(nextScenario);
     setBodyOutcome(null);
+    setBodyObservationResult('recovered');
     setQuestion('feeling');
     setBodyResultReady(false);
     setBodyRecordReady(false);
@@ -464,11 +517,20 @@ function App() {
             {avatarOpen && <div className="avatar-menu" role="menu" aria-label="页面查验控制">
               <button type="button" role="menuitem" className="restart-control" onClick={restart}><i>↻</i><span>重新开始</span></button>
               <button type="button" role="menuitem" disabled={checkpointIndex === 0} onClick={() => jumpTo(checkpointIndex - 1)}><i>←</i><span>上一步</span></button>
-              <button type="button" role="menuitem" disabled={checkpointIndex === checkpoints.length - 1 || (confirming && scene !== 'confirmation-transition') || (isBody && bodyOutcome === 'urgent' && checkpointIndex >= 5)} onClick={() => jumpTo(checkpointIndex + 1)}><i>→</i><span>下一步</span></button>
+              <button type="button" role="menuitem" disabled={checkpointIndex === checkpoints.length - 1 || (confirming && scene !== 'confirmation-transition') || (isBody && bodyKeepsExecuting && checkpointIndex >= 5)} onClick={() => jumpTo(checkpointIndex + 1)}><i>→</i><span>下一步</span></button>
               <div className="avatar-menu-label">异常体验故事</div>
               <button type="button" role="menuitem" className={scenarioId === 'air-warning' ? 'scenario-control current' : 'scenario-control'} onClick={() => startScenario('air-warning')}><i className="story-dot warning" /><span>空气环境异常</span></button>
               <button type="button" role="menuitem" className={`scenario-control ${isBody ? 'current' : ''}`} onClick={() => startScenario('body-warning')}><i className="story-dot warning" /><span>人体检测不舒服</span></button>
               <button type="button" role="menuitem" className="scenario-control" disabled={scene === 'standby'} onClick={triggerFall}><i className="story-dot emergency" /><span>疑似跌倒</span>{scene === 'standby' && <em>等待人在场</em>}</button>
+              {isBody && <>
+                <div className="avatar-menu-label">无回应观察结果</div>
+                <button type="button" role="menuitem" className={`scenario-control ${bodyObservationResult === 'recovered' ? 'current' : ''}`} onClick={() => { setBodyObservationResult('recovered'); setAvatarOpen(false); }}><i className="story-dot normal" /><span>数据恢复平稳</span></button>
+                <button type="button" role="menuitem" className={`scenario-control ${bodyObservationResult === 'escalate' ? 'current' : ''}`} onClick={() => { setBodyObservationResult('escalate'); setAvatarOpen(false); }}><i className="story-dot emergency" /><span>仍异常并升级</span></button>
+              </>}
+              {deviceOpen && <>
+                <div className="avatar-menu-label">设备界面状态</div>
+                {deviceTestOptions.map(option => <button type="button" role="menuitem" className={deviceTestState === option.id ? 'scenario-control current' : 'scenario-control'} key={option.id} onClick={() => { setDeviceTestState(option.id); setAvatarOpen(false); }}><i className={`story-dot ${option.id === 'normal' || option.id === 'linked' ? 'normal' : option.id === 'failed' || option.id === 'disconnected' ? 'emergency' : 'warning'}`} /><span>{option.label}</span></button>)}
+              </>}
             </div>}
           </div>
         </div>
@@ -491,7 +553,7 @@ function App() {
         <div className="summary-grid">
           <CalendarCard date={standby.date} />
           <DeviceCountCard
-            count={standby.devices.filter((d) => d.status === "online").length}
+            count={onlineDeviceCount}
           />
         </div>
         <WorkflowCard
@@ -523,7 +585,7 @@ function App() {
         <aside className="work-panel wake-panel">
           <div className="summary-grid">
             <CalendarCard date={standby.date} />
-            <DeviceCountCard count={standby.devices.filter((d) => d.status === "online").length} />
+            <DeviceCountCard count={onlineDeviceCount} />
           </div>
           <DiscoveryCard count={wake.detectedPeople} />
         </aside>
@@ -531,7 +593,7 @@ function App() {
       {showPerception && <PerceptionPage active={scene !== "seating"} data={scenario.perception} onBodyStart={startBodySensing} onComplete={finishPerception} />}
       {showAnalysis && <AnalysisPage active={!showDecision} data={scenario.analysis} severity={scenario.severity} heading={scenario.headings.analysis} onStageChange={setReasoningStage} onComplete={finishAnalysis} />}
       {showDecision && <DecisionPage active={scene === "deciding" || scene === "execution-transition" || (scene === 'feedback-transition' && !!scenario.skipExecution)} data={scenario.decision} heading={scenario.headings.decision} onComplete={showDecisionVoice} />}
-      {showExecution && <ExecutionPage active={scene === "executing" || scene === "feedback-transition"} data={scenario.execution} heading={scenario.headings.execution} onComplete={finishExecution} />}
+      {showExecution && <ExecutionPage active={scene === "executing" || scene === "feedback-transition"} data={scenario.execution} heading={scenario.headings.execution} onComplete={finishExecution} careActionState={bodyOutcome === 'unanswered-escalated' ? 'running' : 'pending'} />}
       {showFeedback && <FeedbackPage
         active={scene === "feedback"}
         data={scenario.feedback}
@@ -543,11 +605,11 @@ function App() {
       />}
       </div>
       {confirming && <ConfirmationPanel question={bodyQuestions[question]} questionKey={question} transition={questionTransition} interactive={scene === 'confirming' && !functionPanelOpen} onAnswer={answerConfirmation} severity={scenario.severity} />}
-      <DevicePanel open={deviceOpen} onClose={() => setDeviceOpen(false)} />
+      <DevicePanel key={`devices-${flowRun}`} open={deviceOpen} onClose={() => setDeviceOpen(false)} story={deviceStory} testState={deviceTestState} suspended={fallActive} onCountChange={setOnlineDeviceCount} />
       <SpacePanel open={spaceOpen} onClose={() => setSpaceOpen(false)} />
       <MemoryPanel open={memoryOpen} onClose={() => setMemoryOpen(false)} items={[...(fallRecorded ? [fallMemory] : []), ...(isBody && !bodyRecordReady ? bodyHistory : scenario.memoryItems)]} />
       <Navigation items={navigation} onSelect={select} activeId={memoryOpen ? "memory" : spaceOpen ? "space" : deviceOpen ? "devices" : "home"} />
-      {!memoryOpen && <VoiceDock
+      {!memoryOpen && !deviceOpen && <VoiceDock
         placement={confirming && !functionPanelOpen ? 'confirmation' : 'dock'}
         message={functionPanelOpen || confirming ? null : scene === 'deciding' ? (decisionVoiceShown ? scenario.decision.voice : null) : scene === "feedback" ? (feedbackVoiceShown ? scenario.feedback.voice : null) : scene === "ending-transition" || scene === "ending" ? null : scene === "standby" || showDecision || showExecution || showAnalysis ? null : showPerception ? ((isBody ? bodyResultReady : bodySensingStarted) ? scenario.perception.greeting : null) : wake.greeting}
         onPresentationComplete={scene === 'deciding' && decisionVoiceShown && !functionPanelOpen ? finishDecision : undefined}

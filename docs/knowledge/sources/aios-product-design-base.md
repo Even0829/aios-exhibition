@@ -4,7 +4,7 @@
 
 - 文件：`/Users/admin/Desktop/pm-product-design-knowledge-base.md`
 - 生成日期：2026-06-29。
-- 用户确认角色：本项目的 AIOS 背景、世界观底座和生态介绍。
+- 既有角色：AIOS 背景、世界观与生态介绍。2026-09-15 起旧生态仅按需参考；当前主来源及用户修订见[引元来源卡](origin-product-base.md)。
 
 ## 权限边界
 
@@ -16,7 +16,7 @@
 | --- | --- |
 | AIOS 使命、主动服务、物理 AI、中心资产与长期产品判断 | `../../foundation/aios-worldview.md` |
 | AIOS 系统定义、当前阶段、五产品分工与协作关系 | `../system/aios-ecosystem.md` |
-| 引元定位、能力、产品线和边界 | `../products/origin.md` |
+| 引元产品方向参考；旧定位已被新来源替换 | `../products/origin.md`，当前定义来源见 `origin-product-base.md` |
 | 本项目“引元家庭康养产品”的定义 | `../products/origin-home-eldercare.md`，并结合 2026-08-07 用户确认成果 |
 
 ## 后续使用

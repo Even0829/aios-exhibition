@@ -4,4 +4,5 @@
 
 ## Sources
 
-- `aios-product-design-base.md`：AIOS 产品设计底座来源卡。
+- `origin-product-base.md`：当前引元知识底座来源、用户修订与吸收路径。
+- `aios-product-design-base.md`：旧 AIOS 产品设计底座来源卡与保留范围。

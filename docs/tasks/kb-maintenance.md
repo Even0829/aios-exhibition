@@ -24,12 +24,11 @@ status: ready
 
 ## Context Manifest
 
-当前无进行中的维护轮。最近一轮已吸收 Mock 实现术语不得进入观众可见文案，以及结束卡圆环完成后停留 3 秒的规则；长期业务与上位产品细节未纳入该轮审查。
+当前无进行中的维护轮；以下为最近完成的电视端家庭设备与账号界面上下文。
 
 ```text
 Current Task:
 - docs/tasks/kb-maintenance.md
-
 README Chain:
 - README.md
 - docs/README.md
@@ -38,27 +37,19 @@ README Chain:
 - docs/knowledge/products/README.md
 - docs/architecture/README.md
 - docs/specs/README.md
-
 Direct References:
+- 2026-09-16 本任务对话中的电视端收敛确认
+- .tmp/reviews/device-tv-design-proposal.md
+- docs/tasks/exhibition-frontend.md
+Owner Closure:
+- docs/RULES.md
 - docs/knowledge/products/aios-exhibition-context.md
 - docs/architecture/aios-exhibition-experience.md
 - docs/specs/aios-exhibition-design-system.md
-- docs/architecture/exhibition-stories/README.md
-- docs/architecture/exhibition-stories/normal-state.md
-- docs/architecture/exhibition-stories/air-environment-warning.md
-- docs/architecture/exhibition-stories/body-discomfort.md
-- docs/architecture/exhibition-stories/suspected-fall-emergency.md
-
-Owner Closure:
-- docs/RULES.md
-- docs/canonical-vocabulary.md
-- 陈展事实 Owner、总体体验架构、故事路由及四个故事 Owner、完整设计系统
-
 Missing:
 - none
-
 Conflicts:
-- none
+- none；旧设备开关、独立手机管理和账号详情方案按用户最新确认收敛
 ```
 
 ## This Round Input
@@ -68,6 +59,10 @@ Conflicts:
 none
 
 ## Latest Completed Round
+
+2026-09-16：吸收已确认并完成浏览器验收的电视端家庭设备方案。事实 Owner 记录 Home Assistant 目标、电视／App 分工、平台与真实接入待验证边界；体验架构收敛为设备列表／详情、账号列表和同面板手机接续；设计系统更新 12 台连续 Mock、涂鸦 9／小米 3、语音回执、异常和遥控验收。旧临时评审稿已改为吸收指针，不再保留独立手机管理、账号详情或卡片开关的平行定义。前端任务已记录构建、固定预览、1920／1280 浏览器检查、方向键、分层返回与无控制台告警并回到 `ready`。
+
+2026-09-15：依据最新引元来源与用户三轮确认，升级引元产品 Owner，新增通用系统模型和来源卡；同步康养垂类身份、决策三维、陈展样板关系、术语和导航。旧生态改为按需参考，不再作为默认上位依赖。已核对新文档各章归属、受影响 Owner 语义及旧定位残留；结构扫描的本地链接与任务 frontmatter 均无错误，重复标题为模板和跨文档章节，不据此认定定义重复。未修改前端、场景阈值、设备或外部服务。来源分析已重置，临时报告完成吸收并清理；技术实现与全量场景语义不属于本轮验收。
 
 2026-09-14：将用户重复确认的“Mock 只属于实现与交付边界，不进入观众可见文案”明确写入完整设计系统，并清理空气异常决策项和记忆详情的两处前台标识；同时将通用结束卡节奏更新为绿色圆环 3.6 秒走满、完成态停留 3 秒后再进入既有回流转场。前端任务已记录构建、5186 同步、页面文案与连续时序采样，控制台无告警并回到 `ready`。
 
